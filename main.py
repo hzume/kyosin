@@ -9,11 +9,13 @@ def excel_date(num):
 # 入力される予定のパラメータ
 year = 2021
 month = 12
-
+path_tutor = "講師情報.xlsx"
+path_admin = "../管理票sample.xlsx"
+path_template = "sample12.xlsx"
 
 # 講師情報変更時のみでOK
 # 講師情報を取得
-wb_tutor = openpyxl.load_workbook("講師情報.xlsx")
+wb_tutor = openpyxl.load_workbook(path_tutor)
 ws_tutor = wb_tutor.worksheets[0]
 tutors = {}
 tutor_names = []
@@ -31,7 +33,7 @@ for row in ws_tutor.rows:
 ###################################################################################################
 
 # 管理票を取得
-with open("../管理票sample.xlsx", "rb") as f, tempfile.TemporaryFile() as tf:
+with open(path_admin, "rb") as f, tempfile.TemporaryFile() as tf:
     ms_file = msoffcrypto.OfficeFile(f)
     ms_file.load_key(password="1219")
     ms_file.decrypt(tf)
@@ -86,7 +88,7 @@ for sheetname in sheetnames:
 ###################################################################################
 
 # 給与テンプレートを取得
-wb_template = openpyxl.load_workbook("sample12.xlsx")
+wb_template = openpyxl.load_workbook(path_template)
 ws_template = wb_template.worksheets[0]
 ws_template["F2"] = year
 ws_template["H2"] = month
@@ -100,4 +102,3 @@ for name in tutor_names:
             ws_template.cell(10 + day, 4 + class_time).value = 80 if tutor["勤務"][day] & (1 << class_time) else None
     wb_template.save(fullname + f"{year}年{month}月.xlsx")
     
-
