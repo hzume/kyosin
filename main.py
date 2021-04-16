@@ -3,76 +3,111 @@ import msoffcrypto
 import tempfile
 from datetime import datetime, timedelta
 import PySimpleGUI as sg
+from os.path import basename
+import configparser
+import warnings
 
-# オプションの設定と標準レイアウト
-font_name = 'arial'
-font_size = 12
+warnings.simplefilter("ignore")
 
-frame1 = [
-    [
-        sg.Text("講師情報", size=(15,1), font=((font_name, font_size))),
-    ],
-    [   
-        sg.Input(size=(20,1), justification="right", font=((font_name, font_size))),
-        sg.FileBrowse("ファイルを選択", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
-    ],
-    [
+def main():
+    config_ini = configparser.ConfigParser()
+    config_ini.read("../config.ini", encoding="utf-8")
+    default = config_ini["DEFAULT"]
 
-        sg.Text("管理票", size=(15,1), font=((font_name, font_size))),
-    ],
-    [   
-        sg.Input(size=(20,1), justification="right", font=((font_name, font_size))),
-        sg.FileBrowse("ファイルを選択", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
-    ],
-    [
-        sg.Text("テンプレート", size=(15,1), font=((font_name, font_size))),
-    ],
-    [
-        sg.Input(size=(20,1), justification="right", font=((font_name, font_size))),
-        sg.FileBrowse("ファイルを選択", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
-    ],
-    [
-        sg.Text("年月", size=(15,1), font=((font_name, font_size)))
-    ],
-    [
-        sg.Input(size=(10,1), justification="right", font=((font_name, font_size))),
-        sg.Text("年", font=((font_name, font_size))),
-        sg.Input(size=(5,1), justification="right", font=((font_name, font_size))),
-        sg.Text("月", font=((font_name, font_size))),
-    ],
-]
+    # オプションの設定と標準レイアウト
+    sg.theme('SystemDefault')
+    font_name = 'arial'
+    font_size = 12
 
-layout = [
-   [
-       sg.Frame("Input Files", frame1, font=((font_name, font_size)))
-   ],
-    [
-        sg.Button("実行", font=((font_name, font_size)))
-    ],
-]
+    frame1 = [
+        [
+            sg.Text("講師情報", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0))),
+        ],
+        [   
+            sg.Input(default_text=default["tutor_path"], key="tutor", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
+            sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
+        ],
+        [
 
-# ウィンドウの生成
-window = sg.Window('入力ファイルと年月を指定', layout)
+            sg.Text("管理票", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0))),
+        ],
+        [   
+            sg.Input(default_text=default["admin_path"], key="admin", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
+            sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
+        ],
+        [
+            sg.Text("テンプレート", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0))),
+        ],
+        [
+            sg.Input(default_text=default["template_path"], key="template", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
+            sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
+        ],
+        [
+            sg.Text("年月", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0)))
+        ],
+        [
+            sg.Input(default_text=default["year"], size=(10,1), key="year", enable_events=True, justification="right", font=((font_name, font_size))),
+            sg.Text("年", font=((font_name, font_size))),
+            sg.Input(size=(5,1), key="month", enable_events=True, justification="right", font=((font_name, font_size))),
+            sg.Text("月", font=((font_name, font_size))),
+        ],
+        [
+            sg.Text("出力先", size=(15,1), font=(font_name, font_size), pad=((0,0),(10,0)))
+        ],
+        [
+            sg.Input(default_text=default["output_folder"], key="output_folder", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
+            sg.FolderBrowse("参照", initial_folder="../", font=((font_name, font_size)))
+        ]
+    ]
 
-# イベントループ
-while True:
-    event, values = window.read()
+    frame2 = [
+        [
+            sg.Output(size=(50, 17), font=((font_name, font_size)))
+        ]
+    ]
 
-    if event is None:
-        print('exit')
-        break
-    
-    if event == "実行":
+    layout = [
+        [
+            sg.Frame("Setting", frame1, font=((font_name, font_size))),
+            sg.Frame("Log", frame2, font=((font_name, font_size)))
+        ],
+        [
+            sg.Button("実行", font=((font_name, font_size)))
+        ],
+    ]
+
+    # ウィンドウの生成
+    window = sg.Window('給与明細作成', layout)
+
+    # イベントループ
+    while True:
+        event, values = window.read()
         
+        if event is None:
+            print('終了')
+            break
 
-# ウィンドウの破棄と終了
-window.close()
+        if event == "実行":
+            if "" in [values["tutor"], values["admin"], values["template"], values["year"], values["month"], values["output_folder"]]:
+                print("入力されていない項目があります")
+            else:
+                if default["password"] != sg.popup_get_text(message="パスワードを入力してください", password_char="*", font=(font_name, font_size)):
+                    print("パスワードが間違っています")
+                else:
+                    print("処理を実行")
+                    print("処理対象ファイル:" + basename(values["tutor"]) + ", " + basename(values["admin"]) + ", " + basename(values["template"]))
+                    exec(values["tutor"], values["admin"], values["template"], int(values["year"]), int(values["month"]), values["output_folder"])
+                    print("処理を終了しました")
+
+    # ウィンドウの破棄と終了
+    window.close()
+
 ############################################################################
 
 def excel_date(num):
     return(datetime(1899, 12, 30) + timedelta(days=num))
 
-def main(path_tutor, path_admin, path_template, year, month):
+def exec(path_tutor, path_admin, path_template, year, month, output_folder):
     # 講師情報変更時のみでOK
     # 講師情報を取得
     wb_tutor = openpyxl.load_workbook(path_tutor)
@@ -160,5 +195,8 @@ def main(path_tutor, path_admin, path_template, year, month):
         for day in range(31):
             for class_time in range(5):
                 ws_template.cell(10 + day, 4 + class_time).value = 80 if tutor["勤務"][day] & (1 << class_time) else None
-        wb_template.save(fullname + f"{year}年{month}月.xlsx")
+        wb_template.save(output_folder + "/" + fullname + f"{year}年{month}月.xlsx")
+        print(fullname + f"{year}年{month}月.xlsx を出力")
     
+if __name__=="__main__":
+    main()
