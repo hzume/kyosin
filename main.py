@@ -10,9 +10,12 @@ import warnings
 warnings.simplefilter("ignore")
 
 def main():
+    # コンフィグ読み込み(config.iniを実行ファイルと同フォルダに置く)
+    config_name = "config.ini"
     config_ini = configparser.ConfigParser()
-    config_ini.read("../config.ini", encoding="utf-8")
+    config_ini.read(config_name, encoding="utf-8")
     default = config_ini["DEFAULT"]
+    keys = ["tutor_path", "admin_path", "template_path", "year", "output_folder"]
 
     # オプションの設定と標準レイアウト
     sg.theme('SystemDefault')
@@ -24,7 +27,7 @@ def main():
             sg.Text("講師情報", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0))),
         ],
         [   
-            sg.Input(default_text=default["tutor_path"], key="tutor", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
+            sg.Input(default_text=default.get("tutor_path"), key="tutor_path", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
             sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
         ],
         [
@@ -32,21 +35,21 @@ def main():
             sg.Text("管理票", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0))),
         ],
         [   
-            sg.Input(default_text=default["admin_path"], key="admin", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
+            sg.Input(default_text=default.get("admin_path"), key="admin_path", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
             sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
         ],
         [
             sg.Text("テンプレート", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0))),
         ],
         [
-            sg.Input(default_text=default["template_path"], key="template", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
+            sg.Input(default_text=default.get("template_path"), key="template_path", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
             sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
         ],
         [
             sg.Text("年月", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0)))
         ],
         [
-            sg.Input(default_text=default["year"], size=(10,1), key="year", enable_events=True, justification="right", font=((font_name, font_size))),
+            sg.Input(default_text=default.get("year"), size=(10,1), key="year", enable_events=True, justification="right", font=((font_name, font_size))),
             sg.Text("年", font=((font_name, font_size))),
             sg.Input(size=(5,1), key="month", enable_events=True, justification="right", font=((font_name, font_size))),
             sg.Text("月", font=((font_name, font_size))),
@@ -55,7 +58,7 @@ def main():
             sg.Text("出力先", size=(15,1), font=(font_name, font_size), pad=((0,0),(10,0)))
         ],
         [
-            sg.Input(default_text=default["output_folder"], key="output_folder", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
+            sg.Input(default_text=default.get("output_folder"), key="output_folder", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
             sg.FolderBrowse("参照", initial_folder="../", font=((font_name, font_size)))
         ]
     ]
@@ -88,15 +91,19 @@ def main():
             break
 
         if event == "実行":
-            if "" in [values["tutor"], values["admin"], values["template"], values["year"], values["month"], values["output_folder"]]:
+            if "" in [values["tutor_path"], values["admin_path"], values["template_path"], values["year"], values["month"], values["output_folder"]]:
                 print("入力されていない項目があります")
             else:
-                if default["password"] != sg.popup_get_text(message="パスワードを入力してください", password_char="*", font=(font_name, font_size)):
+                if default.get("password") != sg.popup_get_text(message="パスワードを入力してください", password_char="*", font=(font_name, font_size)):
                     print("パスワードが間違っています")
                 else:
+                    for key in keys:
+                        config_ini.set("DEFAULT", key, values[key])
+                    with open(config_name, "w", encoding="utf-8") as f:
+                        config_ini.write(f)
                     print("処理を実行")
-                    print("処理対象ファイル:" + basename(values["tutor"]) + ", " + basename(values["admin"]) + ", " + basename(values["template"]))
-                    exec(values["tutor"], values["admin"], values["template"], int(values["year"]), int(values["month"]), values["output_folder"])
+                    print("処理対象ファイル:" + basename(values["tutor_path"]) + ", " + basename(values["admin_path"]) + ", " + basename(values["template_path"]))
+                    exec(values["tutor_path"], values["admin_path"], values["template_path"], int(values["year"]), int(values["month"]), values["output_folder"], default.get("password"))
                     print("処理を終了しました")
 
     # ウィンドウの破棄と終了
@@ -107,7 +114,7 @@ def main():
 def excel_date(num):
     return(datetime(1899, 12, 30) + timedelta(days=num))
 
-def exec(path_tutor, path_admin, path_template, year, month, output_folder):
+def exec(path_tutor, path_admin, path_template, year, month, output_folder, password):
     # 講師情報変更時のみでOK
     # 講師情報を取得
     wb_tutor = openpyxl.load_workbook(path_tutor)
@@ -130,7 +137,7 @@ def exec(path_tutor, path_admin, path_template, year, month, output_folder):
     # 管理票を取得
     with open(path_admin, "rb") as f, tempfile.TemporaryFile() as tf:
         ms_file = msoffcrypto.OfficeFile(f)
-        ms_file.load_key(password="1219")
+        ms_file.load_key(password=password)
         ms_file.decrypt(tf)
         wb = openpyxl.load_workbook(tf, data_only=True)
 
@@ -156,7 +163,9 @@ def exec(path_tutor, path_admin, path_template, year, month, output_folder):
             if (type(head_cell) == int) or (head_cell == None):
                 if type(head_cell) == int:
                     date = excel_date(head_cell)
-                    # 異なる月の日付があったら警告
+                    #############################
+                    # 異なる月の日付があったら警告#
+                    #############################
                     if date.month != month:
                         break
                     day = date.day - 1 # 0 ~ 30
