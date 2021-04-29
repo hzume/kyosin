@@ -7,7 +7,7 @@ from os.path import basename
 import configparser
 import warnings
 
-warnings.simplefilter("ignore")
+#warnings.simplefilter("ignore")
 
 def main():
     # コンフィグ読み込み(config.iniを実行ファイルと同フォルダに置く)
@@ -16,71 +16,6 @@ def main():
     config_ini.read(config_name, encoding="utf-8")
     default = config_ini["DEFAULT"]
     keys = ["tutor_path", "admin_path", "template_path", "year", "output_folder"]
-
-    # オプションの設定と標準レイアウト
-    sg.theme('SystemDefault')
-    font_name = 'arial'
-    font_size = 12
-
-    frame1 = [
-        [
-            sg.Text("講師情報", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0))),
-        ],
-        [   
-            sg.Input(default_text=default.get("tutor_path"), key="tutor_path", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
-            sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
-        ],
-        [
-
-            sg.Text("管理票", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0))),
-        ],
-        [   
-            sg.Input(default_text=default.get("admin_path"), key="admin_path", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
-            sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
-        ],
-        [
-            sg.Text("テンプレート", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0))),
-        ],
-        [
-            sg.Input(default_text=default.get("template_path"), key="template_path", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
-            sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", font=((font_name, font_size)))
-        ],
-        [
-            sg.Text("年月", size=(15,1), font=((font_name, font_size)), pad=((0,0),(10,0)))
-        ],
-        [
-            sg.Input(default_text=default.get("year"), size=(10,1), key="year", enable_events=True, justification="right", font=((font_name, font_size))),
-            sg.Text("年", font=((font_name, font_size))),
-            sg.Input(size=(5,1), key="month", enable_events=True, justification="right", font=((font_name, font_size))),
-            sg.Text("月", font=((font_name, font_size))),
-        ],
-        [
-            sg.Text("出力先", size=(15,1), font=(font_name, font_size), pad=((0,0),(10,0)))
-        ],
-        [
-            sg.Input(default_text=default.get("output_folder"), key="output_folder", size=(40,1), enable_events=True, readonly=True, justification="right", font=((font_name, font_size))),
-            sg.FolderBrowse("参照", initial_folder="../", font=((font_name, font_size)))
-        ]
-    ]
-
-    frame2 = [
-        [
-            sg.Output(size=(50, 17), font=((font_name, font_size)))
-        ]
-    ]
-
-    layout = [
-        [
-            sg.Frame("Setting", frame1, font=((font_name, font_size))),
-            sg.Frame("Log", frame2, font=((font_name, font_size)))
-        ],
-        [
-            sg.Button("実行", font=((font_name, font_size)))
-        ],
-    ]
-
-    # ウィンドウの生成
-    window = sg.Window('給与明細作成', layout)
 
     # イベントループ
     while True:
@@ -107,7 +42,6 @@ def main():
                     print("処理を終了しました")
 
     # ウィンドウの破棄と終了
-    window.close()
 
 ############################################################################
 
@@ -198,9 +132,13 @@ def exec(path_tutor, path_admin, path_template, year, month, output_folder, pass
     ws_template["H2"] = month
 
     for name in tutor_names:
+        if name == None:
+            continue
         tutor = tutors[name]
         fullname = tutor["フルネーム"]
-        ws_template["H5"] = fullname
+        ws_template["H5"].value = fullname
+        ws_template["K41"].value = f"=ROUNDDOWN(SUM(K10:K40)/60*{tutor['授業給']},0)"
+        ws_template["R41"].value = f'=COUNTIF(R10:R40,"○")*{tutor["交通費"]}'
         for day in range(31):
             for class_time in range(5):
                 ws_template.cell(10 + day, 4 + class_time).value = 80 if tutor["勤務"][day] & (1 << class_time) else None
