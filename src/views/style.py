@@ -1,5 +1,5 @@
 text_style = {
-    "font": ("arial", 12)
+    "font": ("メイリオ", 12)
 }   
 
 input_text_style = {
