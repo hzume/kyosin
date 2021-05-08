@@ -51,20 +51,7 @@ def excel_date(num):
 def exec(path_tutor, path_admin, path_template, year, month, output_folder, password):
     # 講師情報変更時のみでOK
     # 講師情報を取得
-    wb_tutor = openpyxl.load_workbook(path_tutor)
-    ws_tutor = wb_tutor.worksheets[0]
-    tutors = {}
-    tutor_names = []
-    for row in ws_tutor.rows:
-        if row[0].row == 1:
-            keys = row[1:]
-        else:
-            tutor = {}
-            for k, v in zip(keys, row[1:]):
-                tutor[k.value] = v.value
-            tutor["勤務"] = [0] * 31
-            tutors[row[0].value] = tutor
-            tutor_names.append(row[0].value)
+
 
     ###################################################################################################
 
