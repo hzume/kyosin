@@ -4,6 +4,8 @@ from src.settings.config import *
 
 class InterFace:
     def __init__(self):
+        sg.theme('SystemDefault')
+        
         self.setting_frame = [sg.Frame("Setting", **text_style, layout=[
             [
                 sg.Text("講師情報", **text_style, **input_text_style),
@@ -13,7 +15,6 @@ class InterFace:
                 sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", **text_style)
             ],
             [
-
                 sg.Text("管理票", **text_style, **input_text_style),
             ],
             [   
@@ -52,16 +53,13 @@ class InterFace:
         ])]
 
         self.layout = [
-            self.input_frame,
-            self.output_frame,
-            sg.Button("実行", **text_style),
-            sg.Button("ミーティング設定", **text_style)
+            self.setting_frame,
+            self.log_frame,
+            #sg.Button("実行", key="exec", **text_style),
+            #sg.Button("ミーティング設定", key="set_meetings", **text_style)
         ]
-
-    def show_window(self):
-        sg.theme('SystemDefault')
-        self.window = sg.Window("給与明細作成", layout=self.layout)   
-
+        self.window = sg.Window("給与明細作成", layout=self.layout) 
+    
     def close_window(self):
         self.window.close()
-    
+
