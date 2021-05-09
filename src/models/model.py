@@ -1,3 +1,5 @@
+from src.settings.translate import *
+
 class Class:
     def __init__(self, day, class_time, name, officework=False, officework_time=80):
         self.day = day
@@ -17,7 +19,7 @@ class Tutor:
     
     def worktime_update(self, clas: Class):
         if clas.officework:
-            self.office_work[clas.day] |= (1 << clas.class_time)
+            self.office_work[clas.day] += class_length
         else:
             self.class_work[clas.day] |= (1 << clas.class_time)
     
