@@ -1,5 +1,5 @@
 text_style = {
-    "font": ("メイリオ", 12)
+    "font": ("arial", 12)
 }   
 
 input_text_style = {
@@ -11,5 +11,11 @@ input_form_style = {
     "size": (40,1), 
     "enable_events": True,
     "readonly": True, 
-    "justification": "right"
+    "justification": "left"
+}
+
+short_form_style = {
+    "size": (7,1), 
+    "enable_events": True, 
+    "justification": "center"
 }
