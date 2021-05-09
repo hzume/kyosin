@@ -5,19 +5,17 @@ import tempfile
 from os.path import basename
 from datetime import datetime, timedelta
 from src.views.view import InterFace
+from src.views.popup import PasswordPopup
 from src.models.model import Tutor, Tutors, Class
 from src.settings.translate import *
 from src.settings.config import *
-
-class PasswordMistake(Exception):
-    pass
 
 class Presenter:
     def __init__(self, window: sg.Window):
         self.window = window
         self.tutors = Tutors()
 
-    def excel_date(num):
+    def excel_date(self, num):
         return(datetime(1899, 12, 30) + timedelta(days=num))
     
     # ---to Model---
@@ -30,13 +28,24 @@ class Presenter:
             self.tutors.worktime_update(Class(**params))
 
     def update_config(self, values):
-        default["tutor_path"] = values["tutor_path"]
-        default["admin_path"] = values["admin_path"]
-        default["template_path"] = values["template_path"]
-        default["year"] = values["year"]
-        default["output_folder"] = values["output_folder"]
+        with open("src/settings/config.py", "w") as f:
+            f.write(
+f"""default = {{
+    'password': 1219,
+    'tutor_path': '{values["tutor_path"]}',
+    'admin_path': '{values["admin_path"]}',
+    'template_path': '{values["template_path"]}',
+    'year': {values["year"]},
+    'output_folder': '{values["output_folder"]}',
+}}
+"""
+            )
 
     # ---from View---
+    def receive_password(self):
+        popup = PasswordPopup()
+        return popup.receive_password()
+        
     def receive_tutors(self, tutor_path):
         wb = openpyxl.load_workbook(tutor_path)
         ws = wb.worksheets[0]
@@ -52,12 +61,10 @@ class Presenter:
         return params_list
     
     def receive_classes(self, admin_path, month, password, MAX_ROW = 100, MAX_COLUMN = 30):
-        if password != default[password]:
-            raise Exception
         params_list = []
         with open(admin_path, "rb") as f, tempfile.TemporaryFile() as tf:
             ms_file = msoffcrypto.OfficeFile(f)
-            ms_file.load_key(password=password)
+            ms_file.load_key(password=str(password))
             ms_file.decrypt(tf)
             wb = openpyxl.load_workbook(tf, data_only=True)
         trans_table = str.maketrans(zenkaku_to_hankaku)
@@ -97,10 +104,11 @@ class Presenter:
                             params["name"] = name
                             params["class_time"] = class_time
                             if class1 == "事務" or class2 == "事務":
-                                params["office_work"] = True
+                                params["officework"] = True
                             else:
-                                params["office_work"] = False
-                        params_list.append(params)
+                                params["officework"] = False
+                            params_list.append(params)
+        return params_list
     
     # ---to View---
     def make_payslip(self, template_path, year, month, output_folder):
@@ -110,20 +118,20 @@ class Presenter:
         ws["H2"] = month
 
         for tutor in self.tutors.values():
-            office_time = 0
             if tutor.name == None:
                 continue
             ws["H5"].value = tutor.fullname
             ws["K41"].value = f"=ROUNDDOWN(SUM(K10:K40)/60*{tutor.pay_class},0)"
-            ws["L41"].value = f"=ROUNDDOWN(SUM(L10:L40)/60*{tutor.pay_office},0)"
+            ws["L41"].value = f"=ROUNDDOWN(SUM(L10:L40)/60*{tutor.pay_officework},0)"
             ws["R41"].value = f'=COUNTIF(R10:R40,"○")*{tutor.trans_fee}'
             for day in range(31):
+                office_time = 0
                 for class_time in range(5):
                     if tutor.class_work[day] & (1 << class_time):
-                        ws.cell(row=10+day, column=4+class_time).value = 80
-                        office_time += 30
+                        ws.cell(row=10+day, column=4+class_time).value = class_length
+                        office_time += officetime_per_class
                     if tutor.office_work[day] & (1 << class_time):
-                        office_time += 80
+                        office_time += class_length
                 ws[f"L{10+day}"].value = office_time
             wb.save(output_folder + "/" + tutor.fullname + f"{year}年{month}月.xlsx")
             print(tutor.fullname + f"{year}年{month}月.xlsx を出力")
@@ -134,22 +142,25 @@ class Presenter:
             print("入力されていない項目があります")
             return
         self.update_config(values)
+        password = self.receive_password()
+        if password != default["password"]:
+            print("パスワードが異なります")
+            return
         print("処理を実行")
         print("--処理対象ファイル--")
         print(" 講師情報 　　:" + basename(values["tutor_path"]))
         print(" 管理票 　　　:" + basename(values["admin_path"]))
         print(" テンプレート :" + basename(values["template_path"]))
         print("------------------")
-        tutors_params = self.receive_tutors(**values)
+        tutors_params = self.receive_tutors(values["tutor_path"])
         self.init_tutors(tutors_params)
         try:
-            classes_params = self.receive_classes(**values)
-        except PasswordMistake:
-            print("Error:パスワードが間違っています")
-        except Exception as e:
-            print("Error:不明なエラーです")
-            print(e)
+            classes_params = self.receive_classes(values["admin_path"], int(values["month"]), password)
+        except:
+            import traceback
+            traceback.print_exc()
+            return
         self.set_worktime(classes_params)
-        self.make_payslip(**values)
+        self.make_payslip(values["template_path"], int(values["year"]), int(values["month"]), values["output_folder"])
         print("処理を終了しました")
 
