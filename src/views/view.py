@@ -59,7 +59,9 @@ class InterFace:
             ],
             [    
                 sg.Button("実行", key="exec", **text_style),
-                sg.Button("ミーティング設定", key="set_meeting", **text_style)
+                sg.Button("ミーティング追加", key="add_meeting", **text_style),
+                sg.Button("一覧", key="list_meeting", **text_style),
+                sg.Button("削除", key="del_meeting", **text_style)
             ]
         ]
         self.window = sg.Window("給与明細作成", layout=self.layout)

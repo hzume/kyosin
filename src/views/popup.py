@@ -1,5 +1,6 @@
 import PySimpleGUI as sg
 from src.views.style import *
+from src.views.error import *
 from src.settings.config import *
 
 class PasswordPopup:
@@ -21,18 +22,18 @@ class PasswordPopup:
             event, values = self.window.read()
             if event == None:
                 password = None
-                break
+                raise PassError
             if event == "input_password":
                 password = values["password"]
                 break
-        return password
-    
-    def close_window(self):
         self.window.close()
+        return password
 
 class MeetingPopup:
     def __init__(self, tutor_names: list):
         sg.theme('SystemDefault')
+        cols = [[sg.Checkbox(text=name, key=name, **text_style)] for name in tutor_names]
+
         self.layout = [
             [
                 sg.Text("実施日", **input_text_style, **text_style)
@@ -47,14 +48,10 @@ class MeetingPopup:
             [
                 sg.Input(key="meeting_length", **short_form_style, **text_style),
                 sg.Text("分", **text_style)
-            ]
-        ] + \
-        [
+            ],
             [
-                sg.Checkbox(text=name, key=name, **text_style)
-            ] for name in tutor_names
-        ] + \
-        [
+                sg.Column(cols, scrollable=True, vertical_scroll_only=True, size=(200,400))
+            ],
             [
                 sg.OK()
             ]
@@ -69,7 +66,7 @@ class MeetingPopup:
         while True:
             event, values = self.window.read()
             if event == None:
-                break
+                raise PassError
 
             elif event == "OK":
                 for name in self.tutor_names:
@@ -78,8 +75,6 @@ class MeetingPopup:
                 self.meeting_day = values["meeting_day"]
                 self.meeting_length = values["meeting_length"]
                 break
-                
+        self.window.close()       
         return self.meeting_day, self.meeting_length, self.participants
-
-    def close_window(self):
-        self.window.close()
+        

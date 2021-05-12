@@ -4,9 +4,9 @@ import msoffcrypto
 import tempfile
 from os.path import basename
 from datetime import datetime, timedelta
-from src.views.view import InterFace
 from src.views.popup import PasswordPopup, MeetingPopup
-from src.models.model import Tutor, Tutors, Class
+from src.views.error import *
+from src.models.model import Tutor, Tutors, Class, Meeting
 from src.settings.translate import *
 from src.settings.config import *
 
@@ -14,6 +14,7 @@ class Presenter:
     def __init__(self, window: sg.Window):
         self.window = window
         self.tutors = Tutors()
+        self.meetings = []
 
     def excel_date(self, num):
         return(datetime(1899, 12, 30) + timedelta(days=num))
@@ -21,9 +22,9 @@ class Presenter:
     # ---from Model---
     def get_tutor_names(self):
         tutor_names = []
-        for name in self.tutors.keys():
-            if name != None:
-                tutor_names.append(name)
+        for tutor in self.tutors.values():
+            if tutor.name != None and tutor.type != "運営":
+                tutor_names.append(tutor.name)
         return tutor_names
     
     # ---to Model---
@@ -49,27 +50,31 @@ f"""default = {{
 """
             )
     
-    def set_meeting(self, meeting_day, meeting_length, participants):
-        for participant in participants:
-            self.tutors[participant].office_work[meeting_day] += meeting_length
+    def add_meeting(self, meeting_day, meeting_length, participants):
+        self.meetings.append(Meeting(meeting_day, meeting_length, participants))
+
+    def set_meetings(self):
+        for meeting in self.meetings:
+            for participant in meeting.participants:
+                self.tutors[participant].meeting[meeting.meeting_day] += meeting.meeting_length
 
     # ---from View---
     def receive_meeting(self, tutor_names):
         popup = MeetingPopup(tutor_names)
         meeting_day, meeting_length, participants = popup.receive_meeting()
-        if meeting_day == "" or meeting_length == "":
-            raise Exception
-        popup.close_window()
         del popup
+        if meeting_day == "" or meeting_length == "":
+            raise NotFilledError
+        if not 1 <= int(meeting_day) <= 31:
+            raise InvalidValue
         return meeting_day, meeting_length, participants
 
     def receive_password(self):
         popup = PasswordPopup()
         password = popup.receive_password()
-        if password == "":
-            raise Exception
-        popup.close_window()
         del popup
+        if password == "":
+            raise NotFilledError
         return int(password)
         
     def receive_tutors(self, tutor_path):
@@ -106,15 +111,19 @@ f"""default = {{
 
         for sheetname in sheetnames:
             ws = wb[sheetname]
+            flag = True
             for i in range(1, MAX_ROW):
                 head_cell = ws.cell(row=i, column=2).value
                 if (type(head_cell) == int) or (head_cell == None):
                     if type(head_cell) == int:
                         date = self.excel_date(head_cell)
-########################## 注意 #########################
                         if date.month != month:
-                            break                     
+                            flag = True # 月が異なるとTrue
+                        else:
+                            flag = False              
                         day = date.day - 1 # 0 ~ 30
+                    if flag:
+                        continue
                     table = ws[f"B{i}":f"BA{i+2}"]
                     # シート終了の判定
                     if table[2][0].value == None: 
@@ -138,12 +147,13 @@ f"""default = {{
     
     # ---to View---
     def make_payslip(self, template_path, year, month, output_folder):
-        wb = openpyxl.load_workbook(template_path)
-        ws = wb.worksheets[0]
-        ws["F2"] = year
-        ws["H2"] = month
-
         for tutor in self.tutors.values():
+            if tutor.type == "運営":
+                continue
+            wb = openpyxl.load_workbook(template_path)
+            ws = wb.worksheets[0]
+            ws["F2"] = year
+            ws["H2"] = month % 12 + 1
             if tutor.name == None:
                 continue
             ws["H5"].value = tutor.fullname
@@ -154,8 +164,9 @@ f"""default = {{
                 for class_time in range(5):
                     if tutor.class_work[day] & (1 << class_time):
                         ws.cell(row=10+day, column=4+class_time).value = class_length
-                        tutor.office_work[day] += officetime_per_class 
+                        tutor.office_work[day] += officetime_per_class
                 ws[f"L{10+day}"].value = tutor.office_work[day]
+                ws[f"L{10+day}"].value += tutor.meeting[day]
             wb.save(output_folder + "/" + tutor.fullname + f"{year}年{month}月.xlsx")
             print(tutor.fullname + f"{year}年{month}月.xlsx を出力")
                 
@@ -165,30 +176,62 @@ f"""default = {{
             print("入力されていない項目があります")
             return
         self.update_config(values)
+        if not 1 <= int(values["month"]) <= 12:
+            print("月の値が不適切です")
+            return
         try:
             password = self.receive_password()
-        except:
+        except PassError:
+            return
+        except NotFilledError:
             print("パスワードが入力されていません")
+            return
+        except Exception:
+            import traceback
+            traceback.print_exc()
             return
         if password != default["password"]:
             print("パスワードが異なります")
             return
         print("処理を実行")
-        print("----処理対象ファイル--------------------")
-        print("| 講師情報 　　|" + basename(values["tutor_path"]))
-        print("| 管理票 　　　|" + basename(values["admin_path"]))
-        print("| テンプレート |" + basename(values["template_path"]))
-        print("---------------------------------------")
-        tutors_params = self.receive_tutors(values["tutor_path"])
+        print("--------------------------処理対象ファイル------------------------------------")
+        print("講師情報: " + basename(values["tutor_path"]))
+        print("管理票: " + basename(values["admin_path"]))
+        print("テンプレート: " + basename(values["template_path"]))
+        print("---------------------------------------------------------------------------------------")
+        print("処理中...")
+        try:
+            tutors_params = self.receive_tutors(values["tutor_path"])
+        except FileNotFoundError:
+            print("講師情報が見つかりません。ファイルの場所を確認してください")
+            print("指定された場所:" + values["tutor_path"])
+            return
+
         self.init_tutors(tutors_params)
         try:
             classes_params = self.receive_classes(values["admin_path"], int(values["month"]), password)
+        except FileNotFoundError:
+            print("管理票が見つかりません。ファイルの場所を確認してください")
+            print("指定された場所:" + values["admin_path"])
+            return
         except:
+            print("不明なエラー")
             import traceback
             traceback.print_exc()
             return
         self.set_worktime(classes_params)
-        self.make_payslip(values["template_path"], int(values["year"]), int(values["month"]), values["output_folder"])
+        self.set_meetings()
+        try:
+            self.make_payslip(values["template_path"], int(values["year"]), int(values["month"]), values["output_folder"])
+        except PermissionError:
+            import traceback
+            traceback.print_exc()
+            print("講師の給与明細Excelファイルが開いている可能性があります")
+            return
+        except FileNotFoundError:
+            print("給与明細テンプレートが見つかりません。ファイルの場所を確認してください")
+            print("指定された場所:" + values["template_path"])
+            return
         print("処理を終了しました")
 
     def meeting_setting(self, values):
@@ -196,13 +239,46 @@ f"""default = {{
         if tutor_path == None:
             print("講師情報が指定されていません")
             return
-        tutors_params = self.receive_tutors(tutor_path)
+        try:
+            tutors_params = self.receive_tutors(tutor_path)
+        except FileNotFoundError:
+            print("管理票が見つかりません。ファイルの場所を確認してください")
+            print("指定された場所:" + values["admin_path"])
+            return
         self.init_tutors(tutors_params)
         tutor_names = self.get_tutor_names()
         try:
             meeting_day, meeting_length, participants = self.receive_meeting(tutor_names)
-        except:
+        except PassError:
+            return
+        except NotFilledError:
             print("入力されていない項目があります")
             return
-        self.set_meeting(int(meeting_day), int(meeting_length), participants)
-        print("a")
+        except InvalidValue:
+            print("日の値が不適切です")
+            return
+        except Exception:
+            print("不明なエラー")
+            import traceback
+            traceback.print_exc()
+            return
+        self.add_meeting(int(meeting_day) - 1, int(meeting_length), participants)
+        print("--------------------------ミーティングを追加-----------------------------")
+        print("実施日: " + meeting_day + " 日")
+        print("実施時間: " + meeting_length + " 分")
+        print("参加者: " + ', '.join(participants))
+        print("------------------------------------------------------------------------------------")
+
+    def list_meeting(self, values):
+        print("-----------------------------ミーティング一覧-----------------------------")
+        for meeting in self.meetings:
+            print(f"実施日: {meeting.meeting_day + 1} 日")
+            print(f"実施時間: {meeting.meeting_length} 分")
+            print("参加者: " + ', '.join(meeting.participants))
+            print("------------------------------------------------------------------------------------")
+        if self.meetings == []:
+            print("------------------------------------------------------------------------------------")
+
+    def del_meeting(self, values):
+        self.meetings = []
+        print("ミーティングをすべて削除しました")

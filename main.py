@@ -1,11 +1,9 @@
-from typing import ValuesView
-import PySimpleGUI as sg
 import warnings
 from src.presenter.presenter import Presenter
 from src.presenter.handler import Handler
 from src.views.view import InterFace
 
-#warnings.simplefilter("ignore")
+warnings.simplefilter("ignore")
 
 def main():
     interface = InterFace()

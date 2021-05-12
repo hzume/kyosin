@@ -5,7 +5,9 @@ class Handler:
         self.presenter = presenter
         self.func_dict = {
             "exec": self.presenter.exec,
-            "set_meeting": self.presenter.meeting_setting
+            "add_meeting": self.presenter.meeting_setting,
+            "list_meeting": self.presenter.list_meeting,
+            "del_meeting": self.presenter.del_meeting
         }
     
     def handle(self, event_key, values):
