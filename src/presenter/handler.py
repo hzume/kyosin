@@ -4,7 +4,10 @@ class Handler:
     def __init__(self, presenter: Presenter):
         self.presenter = presenter
         self.func_dict = {
-            "exec": self.presenter.exec
+            "exec": self.presenter.exec,
+            "add_meeting": self.presenter.meeting_setting,
+            "list_meeting": self.presenter.list_meeting,
+            "del_meeting": self.presenter.del_meeting
         }
     
     def handle(self, event_key, values):

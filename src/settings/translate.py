@@ -3,7 +3,8 @@ ja_to_en = {
     "フルネーム": "fullname",
     "授業給": "pay_class",
     "事務給": "pay_officework",
-    "交通費": "trans_fee"
+    "交通費": "trans_fee",
+    "属性": "type"
 }
 
 en_to_ja = {
@@ -11,7 +12,8 @@ en_to_ja = {
     "fullname": "フルネーム",
     "pay_class": "授業給",
     "pay_officework": "事務給",
-    "trans_fee": "交通費"
+    "trans_fee": "交通費",
+    "type": "属性",
 }
 
 zenkaku_to_hankaku = {
