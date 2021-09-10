@@ -1,2 +1,3 @@
-data/
+data/*
 !data/テンプレート.xlsx
+data/output/
