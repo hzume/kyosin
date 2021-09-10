@@ -2,10 +2,8 @@ import PySimpleGUI as sg
 import openpyxl
 import msoffcrypto
 import tempfile
-import os
-from os.path import basename
-import codecs
 import re
+from os.path import basename
 from datetime import datetime, timedelta
 from src.views.popup import PasswordPopup, MeetingPopup
 from src.views.error import *
@@ -40,7 +38,7 @@ class Presenter:
             self.tutors.worktime_update(Class(**params))
 
     def update_config(self, values):
-        with codecs.open("src/settings/config.py", "w", "utf-8") as f:
+        with open("src/settings/config.py", "w") as f:
             f.write(
 f"""default = {{
     'password': 1219,
@@ -132,7 +130,7 @@ f"""default = {{
                     if table[2][0].value == None: 
                         break
                     class_time = class_times[table[2][0].value]
-                    for j in range(1, MAX_COLUMN):
+                    for j in range(3, MAX_COLUMN):
                         params = {}
                         name = table[0][j].value
                         class1 = table[1][j].value
@@ -146,13 +144,14 @@ f"""default = {{
                                 params["officework"] = True
                                 class1 = class1.translate(trans_table)
                                 officework_time1 = re.findall(r"[0-9]+", class1)
-                                if officework_time1:
-                                    params["officework_time"] = int(officework_time1[0])
-                            if (class2 != None) and ("事務" in class2):
+                                officework_time1 = int(officework_time1[0]) if officework_time1 else 80
+                                params["officework_time"] = officework_time1
+                            if (class2 != None) and ("事務" in class2):    
                                 params["officework"] = True
-                                class2 = class2.translate(trans_table)
                                 officework_time2 = re.findall(r"[0-9]+", class2)
-                                params["officework_time"] = int(officework_time2[0])
+                                officework_time2 = int(officework_time2[0]) if officework_time2 else 80
+                                params["officework_time"] = officework_time2
+
                             
                             params_list.append(params)
         return params_list
@@ -162,13 +161,8 @@ f"""default = {{
         for tutor in self.tutors.values():
             if tutor.type == "運営":
                 continue
-            output_path = output_folder + "/" + tutor.fullname + f"{year}.xlsx"
-            if not os.path.isfile(output_path):
-                wb_template = openpyxl.load_workbook(template_path)
-                wb_template.save(output_path)
-            wb = openpyxl.load_workbook(output_path)
-            ws = wb.copy_worksheet(wb.worksheets[0])
-            ws.title = f"{year}年{month}月"
+            wb = openpyxl.load_workbook(template_path)
+            ws = wb.worksheets[0]
             ws["F2"] = year
             ws["H2"] = month % 12 + 1
             if tutor.name == None:
@@ -184,8 +178,8 @@ f"""default = {{
                         tutor.office_work[day] += officetime_per_class
                 ws[f"L{10+day}"].value = tutor.office_work[day]
                 ws[f"L{10+day}"].value += tutor.meeting[day]
-            wb.save(output_path)
-            print(tutor.fullname + f"{year}年{month}月分を出力")
+            wb.save(output_folder + "/" + tutor.fullname + f"{year}年{month}月.xlsx")
+            print(tutor.fullname + f"{year}年{month}月.xlsx を出力")
                 
     # ---Event Process---
     def exec(self, values):
@@ -220,8 +214,6 @@ f"""default = {{
         try:
             tutors_params = self.receive_tutors(values["tutor_path"])
         except FileNotFoundError:
-            import traceback
-            traceback.print_exc()
             print("講師情報が見つかりません。ファイルの場所を確認してください")
             print("指定された場所:" + values["tutor_path"])
             return
@@ -230,16 +222,8 @@ f"""default = {{
         try:
             classes_params = self.receive_classes(values["admin_path"], int(values["month"]), password)
         except FileNotFoundError:
-            import traceback
-            traceback.print_exc()
             print("管理票が見つかりません。ファイルの場所を確認してください")
             print("指定された場所:" + values["admin_path"])
-            return
-        except UnboundLocalError:
-            import traceback
-            traceback.print_exc()
-            print("管理表に問題がある可能性があります")
-            print("管理表のパスワードを設定しているか確認してください")
             return
         except:
             print("不明なエラー")
@@ -256,8 +240,6 @@ f"""default = {{
             print("講師の給与明細Excelファイルが開いている可能性があります")
             return
         except FileNotFoundError:
-            import traceback
-            traceback.print_exc()
             print("給与明細テンプレートが見つかりません。ファイルの場所を確認してください")
             print("指定された場所:" + values["template_path"])
             return
@@ -271,8 +253,6 @@ f"""default = {{
         try:
             tutors_params = self.receive_tutors(tutor_path)
         except FileNotFoundError:
-            import traceback
-            traceback.print_exc()
             print("管理票が見つかりません。ファイルの場所を確認してください")
             print("指定された場所:" + values["admin_path"])
             return
