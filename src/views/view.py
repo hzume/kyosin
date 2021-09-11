@@ -29,6 +29,13 @@ class InterFace:
                 sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", **text_style)
             ],
             [
+                sg.Text("源泉徴収税額表", **text_style, **input_text_style),
+            ],
+            [
+                sg.Input(default_text=default.get("gensen_path"), key="gensen_path", **input_form_style, **text_style),
+                sg.FileBrowse("参照", file_types=(("ALL Files", "*.xlsx"), ), initial_folder="./", **text_style)
+            ],
+            [
                 sg.Text("年月", **text_style, **input_text_style)
             ],
             [
