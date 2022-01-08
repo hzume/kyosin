@@ -49,6 +49,7 @@ f"""default = {{
     'template_path': '{values["template_path"]}',
     'year': {values["year"]},
     'output_folder': '{values["output_folder"]}',
+    'gensen_path': '{values["gensen_path"]}'
 }}
 """
             )
