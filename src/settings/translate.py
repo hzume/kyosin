@@ -30,6 +30,8 @@ zenkaku_to_hankaku = {
     "％":"%"
 }
 
+class_marks = ["①", "②", "③", "④", "⑤"]
+
 class_times = {
     "2:00-3:20":0, 
     "3:30-4:50":1, 

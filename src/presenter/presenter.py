@@ -123,7 +123,7 @@ f"""default = {{
             flag = True
             for i in range(1, MAX_ROW):
                 head_cell = ws.cell(row=i, column=2).value
-                if (type(head_cell) == int) or (head_cell == None):
+                if (type(head_cell) == int) or ((head_cell not in class_times) and (head_cell not in class_marks)):
                     if type(head_cell) == int:
                         date = excel_date(head_cell)
                         if date.month != month:
@@ -214,9 +214,13 @@ f"""default = {{
             ws_template["P41"].value = f'=COUNTIF(R10:R40,"○")*{tutor.trans_fee}'
     
     # 給与明細作成
-            ws = wb.copy_worksheet(wb.worksheets[0])
+            ws_title = f"{year}年{month}月"
+            if ws_title in wb:
+                ws = wb[ws_title]
+            else:
+                ws = wb.copy_worksheet(wb.worksheets[0])
+                ws.title = ws_title
             ws["P2"].value = gensen_s
-            ws.title = f"{year}年{month}月"
             ws["F2"] = year
             ws["H2"] = month % 12 + 1
             for day in range(31):
