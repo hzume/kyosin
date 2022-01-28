@@ -5,4 +5,5 @@ default = {
     'template_path': 'C:/Users/user/Desktop/Development/kyosin/data/テンプレート.xlsx',
     'year': 2021,
     'output_folder': 'C:/Users/user/Desktop/Development/kyosin/data/output',
+    'gensen_path': 'C:/Users/user/Desktop/Development/kyosin/data/01-07.xlsx'
 }

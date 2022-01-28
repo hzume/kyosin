@@ -1,11 +1,13 @@
 import PySimpleGUI as sg
 import openpyxl
+from openpyxl.styles import PatternFill
 import msoffcrypto
 import tempfile
 import os
 from os.path import basename
 import codecs
 import re
+import os
 from src.views.popup import PasswordPopup, MeetingPopup
 from src.views.error import *
 from src.models.model import Tutor, Tutors, Class, Meeting
@@ -146,6 +148,10 @@ f"""default = {{
                         class2 = table[2][j].value
                         trans_table = str.maketrans(zenkaku_to_hankaku)
                         if name != None and (class1 != None or class2 != None):
+                            color = "ff8080"
+                            table[0][j].fill = PatternFill(patternType="solid", fgColor=color, bgColor=color)
+                            table[1][j].fill = PatternFill(patternType="solid", fgColor=color, bgColor=color)
+                            table[2][j].fill = PatternFill(patternType="solid", fgColor=color, bgColor=color)
                             params["day"] = day
                             params["name"] = name
                             params["class_time"] = class_time
@@ -162,6 +168,10 @@ f"""default = {{
                                 params["officework_time"] = int(officework_time2[0])
                             
                             params_list.append(params)
+            checksheet_path = os.path.dirname(admin_path)+f"/給与確認用{month}月分.xlsx"
+            if os.path.exists(checksheet_path):
+                os.remove(checksheet_path)
+            wb.save(checksheet_path)
         return params_list
     
     # 源泉徴収税額を計算するExcel関数の生成
@@ -233,7 +243,7 @@ f"""default = {{
                 ws[f"L{10+day}"].value += tutor.meeting[day]
             wb.save(output_path)
             print(tutor.fullname + f"{year}年{month}月分を出力")
-                
+            
     # ---Event Process---
     # 実行
     def exec(self, values):
