@@ -1,9 +1,9 @@
 default = {
     'password': 1219,
-    'tutor_path': 'C:/Users/user/Desktop/Development/kyosin/data/講師情報.xlsx',
-    'admin_path': 'C:/Users/user/Desktop/Development/kyosin/data/Book1.xlsx',
-    'template_path': 'C:/Users/user/Desktop/Development/kyosin/data/テンプレート.xlsx',
-    'year': 2021,
-    'output_folder': 'C:/Users/user/Desktop/Development/kyosin/data/output',
-    'gensen_path': 'C:/Users/user/Desktop/Development/kyosin/data/01-07.xlsx'
+    'tutor_path': 'C:/Users/owner/OneDrive/デスクトップ/給与明細作成/講師情報.xlsx',
+    'admin_path': 'C:/Users/owner/Downloads/2022 5月給与計算用 -.xlsx',
+    'template_path': 'C:/Users/owner/OneDrive/デスクトップ/給与明細作成/テンプレート.xlsx',
+    'year': 2022,
+    'output_folder': 'C:/Users/owner/OneDrive/デスクトップ/給与明細作成/test',
+    'gensen_path': 'C:/Users/owner/OneDrive/デスクトップ/給与明細作成/源泉徴収税額表.xlsx'
 }
