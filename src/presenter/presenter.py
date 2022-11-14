@@ -230,6 +230,12 @@ f"""default = {{
             ws_title = f"{year}年{month}月"
             if ws_title in wb:
                 ws = wb[ws_title]
+                ws["H5"].value = tutor.fullname
+                ws["K41"].value = f"=ROUNDDOWN(SUM(K10:K40)/60*{tutor.pay_class},0)"
+                ws["L41"].value = f"=ROUNDDOWN(SUM(L10:L40)/60*{tutor.pay_officework},0)"
+                ws["M41"].value = f"=ROUNDDOWN(SUM(M10:M40)/240*{tutor.pay_officework}, 0)"
+                ws["N41"].value = f"=ROUNDDOWN(SUM(M10:M40)/240*{tutor.pay_officework}, 0)"
+                ws["P41"].value = f'=COUNTIF(P10:P40,"○")*{tutor.trans_fee}'
             else:
                 ws = wb.copy_worksheet(wb.worksheets[0])
                 ws.title = ws_title
