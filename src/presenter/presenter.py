@@ -209,6 +209,8 @@ f"""default = {{
         for tutor in self.tutors.values():
             if tutor.type == "運営":
                 continue
+            if tutor.name == None:
+                continue
             output_path = output_folder + "/" + tutor.fullname + f"{year}.xlsx"
             if not os.path.isfile(output_path):
                 wb_template = openpyxl.load_workbook(template_path)
@@ -222,7 +224,7 @@ f"""default = {{
             ws_template["L41"].value = f"=ROUNDDOWN(SUM(L10:L40)/60*{tutor.pay_officework},0)"
             ws_template["M41"].value = f"=ROUNDDOWN(SUM(M10:M40)/240*{tutor.pay_officework}, 0)"
             ws_template["N41"].value = f"=ROUNDDOWN(SUM(M10:M40)/240*{tutor.pay_officework}, 0)"
-            ws_template["P41"].value = f'=COUNTIF(R10:R40,"○")*{tutor.trans_fee}'
+            ws_template["P41"].value = f'=COUNTIF(P10:P40,"○")*{tutor.trans_fee}'
     
     # 給与明細作成
             ws_title = f"{year}年{month}月"
