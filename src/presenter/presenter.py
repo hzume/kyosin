@@ -19,12 +19,12 @@ class Presenter:
     def __init__(self, window: sg.Window):
         self.window = window
         self.tutors = Tutors()
-        self.meetings = []
+        self.meetings: list[Meeting] = []
 
     # ---from Model---
     # 講師情報から名前を取得
-    def get_tutor_names(self):
-        tutor_names = []
+    def get_tutor_names(self) -> list[str]:
+        tutor_names:list[str] = []
         for tutor in self.tutors.values():
             if tutor.name != None and tutor.type != "運営":
                 tutor_names.append(tutor.name)

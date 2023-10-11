@@ -1,3 +1,4 @@
 data/*
 !data/テンプレート.xlsx
 data/output/
+venv/
