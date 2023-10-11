@@ -2,3 +2,7 @@ data/*
 !data/テンプレート.xlsx
 data/output/
 venv/
+src/models/__pycache__/
+src/presenter/__pycache__/
+src/settings/__pycache__/
+src/views/__pycache__/
