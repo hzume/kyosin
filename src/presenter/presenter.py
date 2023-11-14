@@ -219,17 +219,21 @@ f"""default = {{
 
     # テンプレートの更新
             ws_template = wb.worksheets[0]
+            for i in range(10,41):
+                ws_template[f"M{i}"] = f"=IF(AND(COUNTA(H{i})=1,COUNTA(D{i}:H{i})=4),10, IF(AND(COUNTA(H{i})=1,COUNTA(D{i}:H{i})=5),40, 0))"
             ws_template["H5"].value = tutor.fullname
             ws_template["K41"].value = f"=ROUNDDOWN(SUM(K10:K40)/60*{tutor.pay_class},0)"
             ws_template["L41"].value = f"=ROUNDDOWN(SUM(L10:L40)/60*{tutor.pay_officework},0)"
             ws_template["M41"].value = f"=ROUNDDOWN(SUM(M10:M40)/240*{tutor.pay_officework}, 0)"
             ws_template["N41"].value = f"=ROUNDDOWN(SUM(M10:M40)/240*{tutor.pay_officework}, 0)"
             ws_template["P41"].value = f'=COUNTIF(P10:P40,"○")*{tutor.trans_fee}'
-    
+            
     # 給与明細作成
             ws_title = f"{year}年{month}月"
             if ws_title in wb:
                 ws = wb[ws_title]
+                for i in range(10,41):
+                    ws[f"M{i}"] = f"=IF(AND(COUNTA(H{i})=1,COUNTA(D{i}:H{i})=4),10, IF(AND(COUNTA(H{i})=1,COUNTA(D{i}:H{i})=5),40, 0))"
                 ws["H5"].value = tutor.fullname
                 ws["K41"].value = f"=ROUNDDOWN(SUM(K10:K40)/60*{tutor.pay_class},0)"
                 ws["L41"].value = f"=ROUNDDOWN(SUM(L10:L40)/60*{tutor.pay_officework},0)"

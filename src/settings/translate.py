@@ -41,4 +41,4 @@ class_times = {
 }
 
 class_length = 80
-officetime_per_class = 30
+officetime_per_class = 20
