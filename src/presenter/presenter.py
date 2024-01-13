@@ -225,7 +225,7 @@ f"""default = {{
             ws_template["K41"].value = f"=ROUNDDOWN(SUM(K10:K40)/60*{tutor.pay_class},0)"
             ws_template["L41"].value = f"=ROUNDDOWN(SUM(L10:L40)/60*{tutor.pay_officework},0)"
             ws_template["M41"].value = f"=ROUNDDOWN(SUM(M10:M40)/240*{tutor.pay_officework}, 0)"
-            ws_template["N41"].value = f"=ROUNDDOWN(SUM(M10:M40)/240*{tutor.pay_officework}, 0)"
+            ws_template["N41"].value = f"=ROUNDDOWN(SUM(N10:N40)/240*{tutor.pay_officework}, 0)"
             ws_template["P41"].value = f'=COUNTIF(P10:P40,"○")*{tutor.trans_fee}'
             
     # 給与明細作成
@@ -238,7 +238,7 @@ f"""default = {{
                 ws["K41"].value = f"=ROUNDDOWN(SUM(K10:K40)/60*{tutor.pay_class},0)"
                 ws["L41"].value = f"=ROUNDDOWN(SUM(L10:L40)/60*{tutor.pay_officework},0)"
                 ws["M41"].value = f"=ROUNDDOWN(SUM(M10:M40)/240*{tutor.pay_officework}, 0)"
-                ws["N41"].value = f"=ROUNDDOWN(SUM(M10:M40)/240*{tutor.pay_officework}, 0)"
+                ws["N41"].value = f"=ROUNDDOWN(SUM(N10:N40)/240*{tutor.pay_officework}, 0)"
                 ws["P41"].value = f'=COUNTIF(P10:P40,"○")*{tutor.trans_fee}'
             else:
                 ws = wb.copy_worksheet(wb.worksheets[0])
